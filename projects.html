@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yinglin Wang | Projects</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="page">
+      <aside id="menu">
+        <nav>
+          <a class="menu-link" href="index.html">Home</a>
+          <a class="menu-link" href="experience.html">Experience</a>
+          <a class="menu-link current" href="projects.html">Projects</a>
+          <a class="menu-link" href="gallery.html">Gallery</a>
+          <a class="menu-link" href="thoughts.html">Thoughts</a>
+          <a class="menu-link" href="reference.html">Reference</a>
+        </nav>
+      </aside>
+
+      <main id="content">
+        <div id="toptitle">
+          <h1>Projects</h1>
+          <div class="toptitle-rule rule-top"></div>
+          <div class="toptitle-rule rule-bottom"></div>
+        </div>
+
+        <section class="section">
+          <h2><a href="https://github.com/Leo-makemore/LinRPC" target="_blank" rel="noreferrer">LinRPC</a></h2>
+          <p>
+            Spring Boot + gRPC microservice suite with real service discovery (Etcd/ZooKeeper), a REST gateway, and a demo script. It runs with full observability and ships Docker/Kubernetes deployments, so you can spin it up locally or in a cluster and see every call, metric, and strategy decision in action.
+          </p>
+        </section>
+
+        <section class="section">
+          <h2>goTrojans</h2>
+          <p>
+            A matchmaking web app I built to help USC students quickly find partners for last-minute activities nearby. 
+            Users can post what they're looking to do, see others' requests on a map, hop into a group, chat, and wrap up with ratings. 
+            Under the hood it runs a TypeScript/NestJS backend with Postgres + Redis for real-time matching and a Next.js frontend that feels like a US consumer app.
+          </p>
+        </section>
+        <section class="section">
+          <h2><a href="https://node-js-project-475620.uc.r.appspot.com/search" target="_blank" rel="noreferrer">Events around</a></h2>
+          <p>
+            You can search events, buy tickets, share to your friends and more. Call a list of APIs to get the data like Google map, ticketMaster, Spotify, etc.
+            It's a small course project but it's really fun and can lead you to a lot of interesting ideas.
+          </p>
+        </section>
+      </main>
+    </div>
+    <footer id="footer">Page generated 2025-11-15 10:00:00 PDT, by a jemdoc-inspired layout.</footer>
+  </body>
+</html>
