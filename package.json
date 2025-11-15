@@ -1,9 +1,11 @@
 {
   "name": "yinglin-website",
   "version": "1.0.0",
-  "description": "Personal website with Notion-powered thoughts",
+  "description": "Personal website with Notion-powered thoughts and gallery",
   "scripts": {
-    "sync": "node sync-thoughts.js"
+    "sync": "node sync-thoughts.js",
+    "sync-gallery": "node sync-gallery.js",
+    "sync-all": "npm run sync && npm run sync-gallery"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.15"
