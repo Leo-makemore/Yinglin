@@ -41,6 +41,8 @@ jobs:
           git add gallery.html assets/gallery/
           if ! git diff --quiet --staged; then
             git commit -m "📸 Sync gallery from Notion [$(date +'%Y-%m-%d %H:%M')]"
-            git push origin main
+            git fetch origin main
+            git rebase origin/main || git merge origin/main
+            git push origin main || (git fetch origin main && git rebase origin/main && git push origin main)
           fi
 
