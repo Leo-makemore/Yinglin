@@ -1,33 +1,62 @@
-// API endpoint to export subscribers list
+// API endpoint to export subscribers list from Upstash Redis
 // This allows you to download the subscribers list from Vercel
 
-const fs = require('fs');
-const path = require('path');
+const { Redis } = require('@upstash/redis');
 
-// For Vercel: file system is read-only, use /tmp for temporary storage
-const IS_VERCEL = process.env.VERCEL === '1';
-const SUBSCRIBERS_FILE = IS_VERCEL 
-  ? '/tmp/subscribers.json'
-  : path.join(__dirname, '..', 'subscribers.json');
-
-// In-memory storage (for Vercel)
-let inMemorySubscribers = [];
-
-function loadSubscribers() {
-  // Try to load from file first
-  try {
-    if (fs.existsSync(SUBSCRIBERS_FILE)) {
-      const data = fs.readFileSync(SUBSCRIBERS_FILE, 'utf8');
-      const subscribers = JSON.parse(data);
-      inMemorySubscribers = subscribers;
-      return subscribers;
-    }
-  } catch (error) {
-    console.warn('Could not load from file:', error.message);
+// Initialize Redis client
+function getRedisConfig() {
+  // Try Vercel's default naming first
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return {
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    };
   }
   
-  // Fallback to in-memory storage
-  return inMemorySubscribers;
+  // Try Upstash default naming (user provided)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return {
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    };
+  }
+  
+  // Debug: log available env vars
+  const redisVars = Object.keys(process.env).filter(k => 
+    k.includes('REDIS') || k.includes('KV') || k.includes('UPSTASH')
+  );
+  if (redisVars.length > 0) {
+    console.log('Available Redis-related env vars:', redisVars);
+  } else {
+    console.log('No Redis-related env vars found');
+  }
+  
+  return null;
+}
+
+const config = getRedisConfig();
+const redis = config
+  ? new Redis({
+      url: config.url,
+      token: config.token,
+    })
+  : null;
+
+const SUBSCRIBERS_KEY = 'subscribers:list';
+
+async function loadSubscribers() {
+  if (!redis) {
+    console.error('Upstash Redis not configured');
+    return [];
+  }
+
+  try {
+    const subscribers = await redis.get(SUBSCRIBERS_KEY);
+    return subscribers || [];
+  } catch (error) {
+    console.error('Error loading subscribers from Redis:', error);
+    return [];
+  }
 }
 
 // For Vercel serverless functions
@@ -47,7 +76,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const subscribers = loadSubscribers();
+    const subscribers = await loadSubscribers();
 
     // Return as JSON
     return res.status(200).json({
