@@ -1,41 +1,37 @@
 // API endpoint for handling subscriptions using Upstash Redis
-// This provides persistent storage through Vercel Marketplace
+// This version supports custom prefixes from Vercel Marketplace
 
 const { Redis } = require('@upstash/redis');
 
-// Initialize Redis client
-// Vercel automatically creates these environment variables:
-// - KV_REST_API_URL (or UPSTASH_REDIS_REST_URL)
-// - KV_REST_API_TOKEN (or UPSTASH_REDIS_REST_TOKEN)
-// - REDIS_URL (alternative format)
+// Support both default and custom prefixed environment variables
+// Default: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+// Custom prefix: {PREFIX}_REDIS_REST_URL, {PREFIX}_REDIS_REST_TOKEN
 function getRedisConfig() {
-  // Try Vercel's default naming first
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    return {
-      url: process.env.KV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
-    };
-  }
-  
-  // Try Upstash default naming
+  // Try default names first
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
     return {
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     };
   }
-  
-  // Try REDIS_URL (if it's in the format redis://...)
-  if (process.env.REDIS_URL) {
-    // REDIS_URL might be in format: redis://default:token@url:port
-    // For @upstash/redis, we need REST API format
-    // So we'll still need KV_REST_API_URL and KV_REST_API_TOKEN
-    console.warn('REDIS_URL found but REST API URL/Token required');
+
+  // Try to find custom prefixed variables
+  // Vercel creates: {PREFIX}_REDIS_REST_URL and {PREFIX}_REDIS_REST_TOKEN
+  const envKeys = Object.keys(process.env);
+  const urlKey = envKeys.find(key => key.endsWith('_REDIS_REST_URL'));
+  const tokenKey = envKeys.find(key => key.endsWith('_REDIS_REST_TOKEN'));
+
+  if (urlKey && tokenKey) {
+    return {
+      url: process.env[urlKey],
+      token: process.env[tokenKey],
+    };
   }
-  
+
   return null;
 }
 
+// Initialize Redis client
 const config = getRedisConfig();
 const redis = config
   ? new Redis({
@@ -49,7 +45,7 @@ const SUBSCRIBERS_KEY = 'subscribers:list';
 async function loadSubscribers() {
   if (!redis) {
     console.error('Upstash Redis not configured. Available env vars:', 
-      Object.keys(process.env).filter(k => k.includes('KV') || k.includes('REDIS') || k.includes('UPSTASH')));
+      Object.keys(process.env).filter(k => k.includes('REDIS') || k.includes('UPSTASH')));
     return [];
   }
 
@@ -94,7 +90,10 @@ module.exports = async function handler(req, res) {
   }
 
   if (!redis) {
-    return res.status(500).json({ error: 'Database not configured' });
+    return res.status(500).json({ 
+      error: 'Database not configured',
+      hint: 'Please check your Vercel environment variables'
+    });
   }
 
   try {
