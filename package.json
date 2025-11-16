@@ -2,6 +2,9 @@
   "name": "yinglin-website",
   "version": "1.0.0",
   "description": "Personal website with Notion-powered thoughts and gallery",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "sync": "node sync-thoughts.js",
     "sync-gallery": "node sync-gallery.js",
