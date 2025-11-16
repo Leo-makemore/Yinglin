@@ -46,6 +46,10 @@ body {
   padding: 2rem;
 }
 
+#toptitle {
+  margin-bottom: 1.5rem;
+}
+
 #toptitle h1 {
   font-family: 'Merriweather', Georgia, serif;
   font-size: 2rem;
@@ -200,6 +204,10 @@ a {
 
   #content {
     padding: 1.2rem;
+  }
+
+  #toptitle {
+    margin-bottom: 1.2rem;
   }
 
   #toptitle h1 {
