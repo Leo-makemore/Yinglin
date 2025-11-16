@@ -1,44 +1,26 @@
-// API endpoint for handling subscriptions using Upstash Redis
-// This provides persistent storage through Vercel Marketplace
+// API endpoint for handling subscriptions using Vercel KV (Redis)
+// This provides persistent storage that won't be lost on deployments
 
-const { Redis } = require('@upstash/redis');
-
-// Initialize Redis client
-const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
-  : null;
+const { kv } = require('@vercel/kv');
 
 const SUBSCRIBERS_KEY = 'subscribers:list';
 
 async function loadSubscribers() {
-  if (!redis) {
-    console.error('Upstash Redis not configured');
-    return [];
-  }
-
   try {
-    const subscribers = await redis.get(SUBSCRIBERS_KEY);
+    const subscribers = await kv.get(SUBSCRIBERS_KEY);
     return subscribers || [];
   } catch (error) {
-    console.error('Error loading subscribers from Redis:', error);
+    console.error('Error loading subscribers from KV:', error);
     return [];
   }
 }
 
 async function saveSubscribers(subscribers) {
-  if (!redis) {
-    console.error('Upstash Redis not configured');
-    return false;
-  }
-
   try {
-    await redis.set(SUBSCRIBERS_KEY, subscribers);
+    await kv.set(SUBSCRIBERS_KEY, subscribers);
     return true;
   } catch (error) {
-    console.error('Error saving subscribers to Redis:', error);
+    console.error('Error saving subscribers to KV:', error);
     return false;
   }
 }
@@ -57,10 +39,6 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  if (!redis) {
-    return res.status(500).json({ error: 'Database not configured' });
   }
 
   try {

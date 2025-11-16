@@ -9,10 +9,15 @@
     "sync": "node sync-thoughts.js",
     "sync-gallery": "node sync-gallery.js",
     "sync-all": "npm run sync && npm run sync-gallery",
-    "notify": "node send-notification.js"
+    "notify": "node send-notification.js",
+    "fetch-subscribers": "node fetch-subscribers.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
     "@notionhq/client": "^2.2.15",
+    "@supabase/supabase-js": "^2.81.1",
+    "@upstash/redis": "^1.34.0",
+    "@vercel/kv": "^1.0.1",
     "dotenv": "^17.2.3",
     "nodemailer": "^6.9.7"
   }

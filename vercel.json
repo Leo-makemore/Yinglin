@@ -3,6 +3,10 @@
     {
       "source": "/api/subscribe",
       "destination": "/api/subscribe.js"
+    },
+    {
+      "source": "/api/export-subscribers",
+      "destination": "/api/export-subscribers.js"
     }
   ]
 }
