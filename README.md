@@ -1,97 +1,87 @@
-# Yinglin Wang - Personal Website
+# Personal Website
 
-A retro-styled personal website inspired by jemdoc layout, featuring automatic content sync from Notion.
+Personal website with subscription functionality and Notion integration.
 
-## 🚀 Live Site
-[yinglin.vercel.app](https://yinglin.vercel.app)
+## Features
 
-## 📱 Mobile Content Publishing
+- Personal portfolio website
+- Subscription system with email notifications
+- Notion-powered thoughts and gallery sync
+- Responsive design
 
-This site automatically syncs **thoughts** and **gallery photos** from Notion databases every hour.
+## Setup
 
-### Setup Instructions:
+### Environment Variables
 
-1. **Configure GitHub Secrets** (go to your repo → Settings → Secrets and variables → Actions):
-   - `NOTION_TOKEN`: Your Notion integration token
-   - `NOTION_DATABASE_ID`: Your Thoughts database ID
-   - `NOTION_GALLERY_DATABASE_ID`: Your Gallery database ID
+Create a `.env` file with:
 
-2. **Publish Thoughts** (手机发布想法):
-   - Open the [Thoughts Database](https://www.notion.so/2acfd74deef680f3b622c65a88c42685) in Notion App
-   - Add a new row with:
-     - **Content**: Your thought/note
-     - **Date**: Today (auto-filled)
-   - Within 1 hour, it will appear on your website
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-gmail-app-password
+FROM_EMAIL=your-email@gmail.com
+FROM_NAME=Your Name
+WEBSITE_URL=https://your-domain.vercel.app
+```
 
-3. **Add Gallery Photos** (添加图片到相册):
-   - **Method 1: JSON Configuration (Recommended)**:
-     1. Put your images in `assets/gallery/` directory
-     2. Edit `assets/gallery/gallery.json`
-     3. Add image entries with filename and caption
-     4. Optionally organize by categories
-   - **Method 2: Notion Sync** (currently disabled):
-     - Open your Gallery Database in Notion App
-     - Add a new row with Image, Caption, and Date
-     - Manually trigger sync workflow in GitHub Actions
+**Gmail App Password Setup:**
+1. Enable 2-Step Verification in Google Account
+2. Generate App Password: https://myaccount.google.com/apppasswords
+3. Use the 16-character password (without spaces) as `SMTP_PASS`
 
-4. **Manual sync** (optional):
-   - Go to Actions tab in GitHub
-   - Click "Sync Thoughts from Notion" or "Sync Gallery from Notion"
-   - Click "Run workflow"
+### Vercel Environment Variables
 
-## 🛠 Local Development
+In Vercel Dashboard → Settings → Environment Variables, add:
+
+- `UPSTASH_REDIS_REST_URL` - Your Upstash Redis REST URL
+- `UPSTASH_REDIS_REST_TOKEN` - Your Upstash Redis REST Token
+
+Or use Vercel's auto-created variables:
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
+
+## Scripts
 
 ```bash
-# Install dependencies
-npm install
-
-# Test Notion sync locally
-export NOTION_TOKEN="your_notion_token"
-export NOTION_DATABASE_ID="your_thoughts_database_id"
-export NOTION_GALLERY_DATABASE_ID="your_gallery_database_id"
-
-# Sync thoughts only
+# Sync thoughts from Notion
 npm run sync
 
-# Sync gallery only
+# Sync gallery from Notion
 npm run sync-gallery
 
 # Sync both
 npm run sync-all
 
-# Preview changes
-open thoughts.html
-open gallery.html
+# Send email notifications to subscribers
+npm run notify "Subject" "Message"
+
+# Fetch subscribers from Vercel
+npm run fetch-subscribers
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 .
-├── index.html              # Home page
-├── experience.html         # Work experience
-├── projects.html           # Projects showcase
-├── gallery.html            # Photo gallery (loaded from gallery.json)
-├── assets/gallery/
-│   ├── gallery.json        # Gallery configuration (images, categories)
-│   └── load-gallery.js     # JavaScript to load and render gallery
-├── thoughts.html           # Thoughts (auto-synced from Notion)
-├── reference.html          # References & links
-├── styles.css              # Retro styling
-├── sync-thoughts.js        # Notion thoughts sync script
-├── sync-gallery.js         # Notion gallery sync script
-├── assets/gallery/         # Downloaded gallery images
-└── .github/workflows/      # Auto-sync automation
-    ├── sync-thoughts.yml   # Thoughts sync workflow
-    └── sync-gallery.yml    # Gallery sync workflow
+├── api/
+│   ├── subscribe.js          # Subscribe API endpoint
+│   ├── unsubscribe.js        # Unsubscribe API endpoint
+│   └── export-subscribers.js # Export subscribers API
+├── assets/                    # Images and icons
+├── *.html                     # Website pages
+├── styles.css                 # Styles
+├── send-notification.js       # Email notification script
+├── fetch-subscribers.js      # Fetch subscribers script
+└── vercel.json               # Vercel configuration
 ```
 
-## 🎨 Design Philosophy
+## Deployment
 
-- **Retro aesthetic**: Inspired by classic academic websites (jemdoc)
-- **Content-first**: Minimal distractions, maximum readability
-- **Mobile-friendly**: Write from anywhere, publish instantly
+Deploy to Vercel:
 
-## 📝 License
+```bash
+git push
+```
 
-Personal website © 2025 Yinglin Wang
+Vercel will automatically deploy. Make sure environment variables are set in Vercel Dashboard.
