@@ -1,9 +1,9 @@
 name: Sync Thoughts from Notion
 
 on:
-  schedule:
-    # 每小时运行一次
-    - cron: '0 * * * *'
+  # schedule:
+  #   # 每小时运行一次
+  #   - cron: '0 * * * *'
   workflow_dispatch:  # 允许手动触发
 
 jobs:
