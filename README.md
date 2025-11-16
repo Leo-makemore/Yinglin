@@ -23,13 +23,16 @@ This site automatically syncs **thoughts** and **gallery photos** from Notion da
      - **Date**: Today (auto-filled)
    - Within 1 hour, it will appear on your website
 
-3. **Publish Photos** (手机上传图片):
-   - Open your Gallery Database in Notion App
-   - Add a new row with:
-     - **Image**: Upload photo(s) from your phone
-     - **Caption**: Description of the photo
-     - **Date**: Today (auto-filled)
-   - Within 1 hour, photos will be downloaded and displayed on your website
+3. **Add Gallery Photos** (添加图片到相册):
+   - **Method 1: JSON Configuration (Recommended)**:
+     1. Put your images in `assets/gallery/` directory
+     2. Edit `assets/gallery/gallery.json`
+     3. Add image entries with filename and caption
+     4. Optionally organize by categories
+   - **Method 2: Notion Sync** (currently disabled):
+     - Open your Gallery Database in Notion App
+     - Add a new row with Image, Caption, and Date
+     - Manually trigger sync workflow in GitHub Actions
 
 4. **Manual sync** (optional):
    - Go to Actions tab in GitHub
@@ -68,7 +71,10 @@ open gallery.html
 ├── index.html              # Home page
 ├── experience.html         # Work experience
 ├── projects.html           # Projects showcase
-├── gallery.html            # Photo gallery (auto-synced from Notion)
+├── gallery.html            # Photo gallery (loaded from gallery.json)
+├── assets/gallery/
+│   ├── gallery.json        # Gallery configuration (images, categories)
+│   └── load-gallery.js     # JavaScript to load and render gallery
 ├── thoughts.html           # Thoughts (auto-synced from Notion)
 ├── reference.html          # References & links
 ├── styles.css              # Retro styling
