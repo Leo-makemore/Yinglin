@@ -5,10 +5,12 @@
   "scripts": {
     "sync": "node sync-thoughts.js",
     "sync-gallery": "node sync-gallery.js",
-    "sync-all": "npm run sync && npm run sync-gallery"
+    "sync-all": "npm run sync && npm run sync-gallery",
+    "notify": "node send-notification.js"
   },
   "dependencies": {
-    "@notionhq/client": "^2.2.15"
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^17.2.3",
+    "nodemailer": "^6.9.7"
   }
 }
-

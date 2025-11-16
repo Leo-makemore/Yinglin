@@ -66,8 +66,25 @@
             so boring without any challenges.
           </p>
           
-            <p><a href="https://docs.google.com/forms/d/1KMRdLF1lMfBBSjv61mbBtfHqlQKhj0PYoDd8yIl4sQY" target="_blank" rel="noreferrer">Any suggestions or feedback are welcome.</a> You can reach me via email or LinkedIn.
+            <p><a href="https://docs.google.com/forms/d/1KMRdLF1lMfBBSjv61mbBtfHqlQKhj0PYoDd8yIl4sQY" target="_blank" rel="noreferrer">Any suggestions or feedback are welcome.</a> You can also reach me via email or LinkedIn.
           </p>
+        </section>
+
+        <section class="section">
+          <h2>Subscribe</h2>
+          <p>Get notified when I update my website with new content.</p>
+          <form id="subscribe-form" class="subscribe-form">
+            <input 
+              type="email" 
+              id="subscribe-email" 
+              name="email" 
+              placeholder="Enter your email" 
+              required 
+              class="subscribe-input"
+            />
+            <button type="submit" class="subscribe-button">Subscribe</button>
+          </form>
+          <div id="subscribe-message" class="subscribe-message"></div>
         </section>
 
         <section class="section">
@@ -93,5 +110,54 @@
       </main>
     </div>
     <footer id="footer"></footer>
+    <script>
+      document.getElementById('subscribe-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('subscribe-email').value;
+        const messageDiv = document.getElementById('subscribe-message');
+        const button = document.querySelector('.subscribe-button');
+        
+        button.disabled = true;
+        button.textContent = 'Subscribing...';
+        messageDiv.textContent = '';
+        messageDiv.className = 'subscribe-message';
+        
+        try {
+          // Try to use API endpoint if available, otherwise use mailto fallback
+          const response = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            messageDiv.textContent = data.message || 'Successfully subscribed!';
+            messageDiv.className = 'subscribe-message success';
+            document.getElementById('subscribe-email').value = '';
+          } else {
+            throw new Error('Subscription failed');
+          }
+        } catch (error) {
+          // Fallback: store in localStorage and show message
+          let subscribers = JSON.parse(localStorage.getItem('subscribers') || '[]');
+          if (!subscribers.includes(email)) {
+            subscribers.push(email);
+            localStorage.setItem('subscribers', JSON.stringify(subscribers));
+            messageDiv.textContent = 'Subscription request received! (Note: Please set up the API endpoint for full functionality)';
+            messageDiv.className = 'subscribe-message success';
+            document.getElementById('subscribe-email').value = '';
+          } else {
+            messageDiv.textContent = 'You are already subscribed!';
+            messageDiv.className = 'subscribe-message info';
+          }
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Subscribe';
+        }
+      });
+    </script>
   </body>
 </html>
