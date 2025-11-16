@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
     }
 
     return res.status(200).json({ 
-      message: 'Successfully subscribed!',
+      message: 'Thank you for your subscription!',
       total: subscribers.length
     });
   } catch (error) {

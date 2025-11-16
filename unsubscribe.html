@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V2LF33K561"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-V2LF33K561');
+    </script>
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Unsubscribe | Yinglin Wang</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="page">
+      <aside id="menu">
+        <nav>
+          <a class="menu-link" href="index.html">Home</a>
+          <a class="menu-link" href="experience.html">Experience</a>
+          <a class="menu-link" href="projects.html">Projects</a>
+          <a class="menu-link" href="gallery.html">Gallery</a>
+          <a class="menu-link" href="thoughts.html">Thoughts</a>
+          <a class="menu-link" href="reference.html">Miscellaneous</a>
+        </nav>
+      </aside>
+
+      <main id="content">
+        <div id="toptitle">
+          <h1>Unsubscribe</h1>
+          <div class="toptitle-rule rule-top"></div>
+          <div class="toptitle-rule rule-bottom"></div>
+        </div>
+
+        <section class="section">
+          <p>We're sorry to see you go. Enter your email address to unsubscribe from updates.</p>
+          <form id="unsubscribe-form" class="subscribe-form">
+            <input 
+              type="email" 
+              id="unsubscribe-email" 
+              name="email" 
+              placeholder="Enter your email" 
+              required 
+              class="subscribe-input"
+            />
+            <button type="submit" class="subscribe-button">Unsubscribe</button>
+          </form>
+          <div id="unsubscribe-message" class="subscribe-message"></div>
+          <p style="margin-top: 1rem;">
+            <a href="index.html">← Back to home</a>
+          </p>
+        </section>
+      </main>
+    </div>
+    <footer id="footer"></footer>
+    <script>
+      document.getElementById('unsubscribe-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('unsubscribe-email').value;
+        const messageDiv = document.getElementById('unsubscribe-message');
+        const button = document.querySelector('#unsubscribe-form .subscribe-button');
+        
+        button.disabled = true;
+        button.textContent = 'Unsubscribing...';
+        messageDiv.textContent = '';
+        messageDiv.className = 'subscribe-message';
+        
+        try {
+          const response = await fetch('/api/unsubscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            messageDiv.textContent = data.message || 'You have been successfully unsubscribed.';
+            messageDiv.className = 'subscribe-message success';
+            document.getElementById('unsubscribe-email').value = '';
+          } else {
+            messageDiv.textContent = data.error || 'Failed to unsubscribe. Please try again.';
+            messageDiv.className = 'subscribe-message error';
+          }
+        } catch (error) {
+          messageDiv.textContent = 'An error occurred. Please try again later.';
+          messageDiv.className = 'subscribe-message error';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Unsubscribe';
+        }
+      });
+    </script>
+  </body>
+</html>
+

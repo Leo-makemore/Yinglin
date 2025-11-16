@@ -1,13 +1,8 @@
-// API endpoint for handling subscriptions using Upstash Redis
-// This provides persistent storage through Vercel Marketplace
+// API endpoint for handling unsubscriptions using Upstash Redis
 
 const { Redis } = require('@upstash/redis');
 
 // Initialize Redis client
-// Vercel automatically creates these environment variables:
-// - KV_REST_API_URL (or UPSTASH_REDIS_REST_URL)
-// - KV_REST_API_TOKEN (or UPSTASH_REDIS_REST_TOKEN)
-// - REDIS_URL (alternative format)
 function getRedisConfig() {
   // Try Vercel's default naming first
   if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
@@ -25,14 +20,6 @@ function getRedisConfig() {
     };
   }
   
-  // Try REDIS_URL (if it's in the format redis://...)
-  if (process.env.REDIS_URL) {
-    // REDIS_URL might be in format: redis://default:token@url:port
-    // For @upstash/redis, we need REST API format
-    // So we'll still need KV_REST_API_URL and KV_REST_API_TOKEN
-    console.warn('REDIS_URL found but REST API URL/Token required');
-  }
-  
   return null;
 }
 
@@ -48,8 +35,7 @@ const SUBSCRIBERS_KEY = 'subscribers:list';
 
 async function loadSubscribers() {
   if (!redis) {
-    console.error('Upstash Redis not configured. Available env vars:', 
-      Object.keys(process.env).filter(k => k.includes('KV') || k.includes('REDIS') || k.includes('UPSTASH')));
+    console.error('Upstash Redis not configured');
     return [];
   }
 
@@ -106,24 +92,29 @@ module.exports = async function handler(req, res) {
 
     const subscribers = await loadSubscribers();
     const normalizedEmail = email.toLowerCase().trim();
+    const index = subscribers.indexOf(normalizedEmail);
 
-    if (subscribers.includes(normalizedEmail)) {
-      return res.status(200).json({ message: 'You are already subscribed!' });
+    if (index === -1) {
+      return res.status(200).json({ 
+        message: 'This email is not in our subscription list.',
+        alreadyUnsubscribed: true
+      });
     }
 
-    subscribers.push(normalizedEmail);
+    // Remove the email from the list
+    subscribers.splice(index, 1);
     const saved = await saveSubscribers(subscribers);
 
     if (!saved) {
-      return res.status(500).json({ error: 'Failed to save subscription' });
+      return res.status(500).json({ error: 'Failed to unsubscribe' });
     }
 
     return res.status(200).json({ 
-      message: 'Thank you for your subscription!',
+      message: 'You have been successfully unsubscribed. We\'re sorry to see you go!',
       total: subscribers.length
     });
   } catch (error) {
-    console.error('Subscription error:', error);
+    console.error('Unsubscribe error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };

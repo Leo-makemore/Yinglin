@@ -290,7 +290,7 @@ body {
 }
 
 .subscribe-message {
-  margin-top: 0.8rem;
+  margin-top: 0.1rem;
   font-size: 0.9rem;
   padding: 0.5rem;
   border-radius: 4px;
@@ -309,6 +309,22 @@ body {
 .subscribe-message.info {
   color: var(--muted);
   background: #f5f5f5;
+}
+
+.unsubscribe-link {
+  margin-top: 0.1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.unsubscribe-link a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.unsubscribe-link a:hover {
+  text-decoration: underline;
+  color: var(--link);
 }
 
 a {

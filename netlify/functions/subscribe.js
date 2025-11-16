@@ -91,7 +91,7 @@ exports.handler = async function(event, context) {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        message: 'Successfully subscribed!',
+        message: 'Thank you for your subscription!',
         total: subscribers.length,
       }),
     };

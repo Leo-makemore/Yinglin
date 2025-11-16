@@ -5,6 +5,10 @@
       "destination": "/api/subscribe.js"
     },
     {
+      "source": "/api/unsubscribe",
+      "destination": "/api/unsubscribe.js"
+    },
+    {
       "source": "/api/export-subscribers",
       "destination": "/api/export-subscribers.js"
     }
