@@ -37,5 +37,5 @@ jobs:
           git config user.name "Gallery Bot"
           git config user.email "bot@yinglin.dev"
           git add gallery.html assets/gallery/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "📸 Sync gallery from Notion [$(date +'%Y-%m-%d %H:%M')]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "📸 Sync gallery from Notion [$(date +'%Y-%m-%d %H:%M')]" && git pull --rebase && git push)
 

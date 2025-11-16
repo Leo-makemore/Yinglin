@@ -37,5 +37,5 @@ jobs:
           git config user.name "Thoughts Bot"
           git config user.email "bot@yinglin.dev"
           git add thoughts.html
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🔄 Sync thoughts from Notion [$(date +'%Y-%m-%d %H:%M')]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🔄 Sync thoughts from Notion [$(date +'%Y-%m-%d %H:%M')]" && git pull --rebase && git push)
 
