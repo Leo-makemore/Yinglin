@@ -235,6 +235,16 @@ body {
   color: var(--muted);
 }
 
+.project-screenshot {
+  max-width: 200px;
+  width: auto;
+  height: auto;
+  margin: 0.5rem 0.5rem 0.5rem 0;
+  border: 1px solid var(--border);
+  display: inline-block;
+  vertical-align: top;
+}
+
 a {
   color: var(--link);
 }
