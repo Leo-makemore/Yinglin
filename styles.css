@@ -181,15 +181,21 @@ a {
   #menu {
     border-right: none;
     border-bottom: 1px solid var(--border);
+    padding: 1rem;
+  }
+
+  #menu nav {
     display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
     gap: 0.8rem;
-    padding: 1rem;
+    justify-content: flex-start;
   }
 
   .menu-link {
     margin-bottom: 0;
     font-size: 0.9rem;
+    display: inline-block;
   }
 
   #content {
