@@ -37,10 +37,10 @@ jobs:
           git config user.name "Gallery Bot"
           git config user.email "bot@yinglin.dev"
           git fetch origin main
+          git rebase origin/main || git merge origin/main
           git add gallery.html assets/gallery/
           if ! git diff --quiet --staged; then
             git commit -m "📸 Sync gallery from Notion [$(date +'%Y-%m-%d %H:%M')]"
-            git pull --rebase origin main || git pull --no-rebase origin main
-            git push
+            git push origin main
           fi
 

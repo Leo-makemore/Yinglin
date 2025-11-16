@@ -37,10 +37,10 @@ jobs:
           git config user.name "Thoughts Bot"
           git config user.email "bot@yinglin.dev"
           git fetch origin main
+          git rebase origin/main || git merge origin/main
           git add thoughts.html
           if ! git diff --quiet --staged; then
             git commit -m "🔄 Sync thoughts from Notion [$(date +'%Y-%m-%d %H:%M')]"
-            git pull --rebase origin main || git pull --no-rebase origin main
-            git push
+            git push origin main
           fi
 
