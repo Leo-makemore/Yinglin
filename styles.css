@@ -18,12 +18,15 @@ body {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   min-height: 100vh;
+  gap: 0;
+  row-gap: 0;
 }
 
 #menu {
   background: #f2f2f2;
   border-right: 1px solid var(--border);
   padding: 2rem 1rem;
+  margin: 0;
 }
 
 .menu-link {
@@ -44,10 +47,19 @@ body {
 
 #content {
   padding: 2rem;
+  margin: 0;
+  padding-top: 2rem;
+}
+
+#content > *:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 #toptitle {
+  margin: 0 !important;
   margin-bottom: 1.5rem;
+  padding: 0 !important;
 }
 
 #toptitle h1 {
@@ -88,7 +100,7 @@ body {
 .toptitle-rule {
   height: 1px;
   background: var(--border);
-  margin-top: 0.2rem;
+  margin-top: 0.6rem;
 }
 
 .toptitle-rule.rule-bottom {
@@ -96,12 +108,14 @@ body {
 }
 
 .section {
-  margin-top: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
   line-height: 1.65;
 }
 
-#toptitle + .section {
-  margin-top: 0;
+.section > *:first-child {
+  margin-top: 0 !important;
 }
 
 .section h2 {
@@ -183,39 +197,62 @@ a {
 
 @media (max-width: 720px) {
   #page {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: 0;
   }
-
+  
   #menu {
+    order: 1;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 1rem;
+    padding: 1.0rem 1rem 0rem 1rem;
+    margin: 0;
+    flex-shrink: 0;
+    height: auto;
+    min-height: 48px;
   }
 
   #menu nav {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.8rem;
-    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .menu-link {
-    margin-bottom: 0;
+    margin: 0;
     font-size: 0.9rem;
-    display: inline-block;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.5;
   }
 
   #content {
+    order: 2;
     padding: 1.2rem;
+    margin: 0;
   }
 
   #toptitle {
-    margin-bottom: 1.2rem;
+    margin: 0 0 1.2rem 0;
+    padding: 0;
   }
 
   #toptitle h1 {
     font-size: 1.6rem;
+    margin: 0;
+  }
+
+  .section {
+    margin-top: 0;
+  }
+
+  .section > *:first-child {
+    margin-top: 0;
   }
 
   .intro-header {
