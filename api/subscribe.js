@@ -2,6 +2,7 @@
 // This provides persistent storage through Vercel Marketplace
 
 const { Redis } = require('@upstash/redis');
+const nodemailer = require('nodemailer');
 
 // Initialize Redis client
 // Vercel automatically creates these environment variables:
@@ -45,6 +46,131 @@ const redis = config
   : null;
 
 const SUBSCRIBERS_KEY = 'subscribers:list';
+const ADMIN_EMAIL = 'wangyinglin177@gmail.com';
+
+// Send subscription notification emails
+async function sendSubscriptionEmails(userEmail) {
+  // Only load dotenv in local development (not needed on Vercel)
+  if (process.env.VERCEL !== '1') {
+    try {
+      require('dotenv').config();
+    } catch (e) {
+      // dotenv not available, that's ok on Vercel
+    }
+  }
+  
+  // Check each variable individually
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpPort = process.env.SMTP_PORT;
+  
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    console.error('SMTP not configured, cannot send subscription emails');
+    return { adminSent: false, userSent: false };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: parseInt(smtpPort || '587'),
+    secure: smtpPort === '465',
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
+
+  const websiteUrl = process.env.WEBSITE_URL || 'https://yinglin.vercel.app';
+  const fromName = process.env.FROM_NAME || 'Yinglin Wang';
+  const fromEmail = process.env.FROM_EMAIL || smtpUser;
+
+  let adminSent = false;
+  let userSent = false;
+
+  // Send email to admin
+  try {
+    const adminHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .info-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>New Subscription</h2>
+          <p>Someone has subscribed to your updates:</p>
+          <div class="info-box">
+            <strong>Email:</strong> ${userEmail}<br>
+            <strong>Time:</strong> ${new Date().toLocaleString()}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const adminResult = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: ADMIN_EMAIL,
+      subject: `New Subscription: ${userEmail}`,
+      html: adminHtml,
+      text: `New subscription from ${userEmail}\nTime: ${new Date().toLocaleString()}`,
+    });
+    
+    console.log(`Subscription notification sent to admin. MessageId: ${adminResult.messageId}`);
+    adminSent = true;
+  } catch (error) {
+    console.error('Error sending subscription notification to admin:', error);
+  }
+
+  // Send confirmation email to user
+  try {
+    const userHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .button { display: inline-block; padding: 12px 24px; background: #8a1c1c; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>Thank You for Subscribing!</h2>
+          <p>You have successfully subscribed to receive updates from my website.</p>
+          <p>You will be notified whenever I post new content or updates.</p>
+          <p>If you want to unsubscribe, you can do so at any time by visiting:</p>
+          <a href="${websiteUrl}/unsubscribe.html" class="button">Unsubscribe</a>
+          <p style="margin-top: 30px; font-size: 12px; color: #666;">
+            If you did not subscribe to this, please ignore this email.
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const userResult = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: userEmail,
+      subject: 'Thank You for Subscribing!',
+      html: userHtml,
+      text: `Thank you for subscribing! You will receive updates from my website. To unsubscribe, visit: ${websiteUrl}/unsubscribe.html`,
+    });
+    
+    console.log(`Subscription confirmation sent to user. MessageId: ${userResult.messageId}`);
+    userSent = true;
+  } catch (error) {
+    console.error('Error sending subscription confirmation to user:', error);
+  }
+
+  return { adminSent, userSent };
+}
 
 async function loadSubscribers() {
   if (!redis) {
@@ -117,6 +243,18 @@ module.exports = async function handler(req, res) {
     if (!saved) {
       return res.status(500).json({ error: 'Failed to save subscription' });
     }
+
+    // Send notification emails (don't wait for them to complete)
+    sendSubscriptionEmails(normalizedEmail).then(result => {
+      if (result.adminSent) {
+        console.log(`Subscription notification sent to admin for ${normalizedEmail}`);
+      }
+      if (result.userSent) {
+        console.log(`Subscription confirmation sent to user ${normalizedEmail}`);
+      }
+    }).catch(error => {
+      console.error('Error sending subscription emails:', error);
+    });
 
     return res.status(200).json({ 
       message: 'Thank you for your subscription!',
