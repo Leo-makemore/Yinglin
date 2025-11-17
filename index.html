@@ -126,7 +126,6 @@
         messageDiv.className = 'subscribe-message';
         
         try {
-          // Try to use API endpoint if available, otherwise use mailto fallback
           const response = await fetch('/api/subscribe', {
             method: 'POST',
             headers: {
@@ -135,27 +134,23 @@
             body: JSON.stringify({ email: email })
           });
           
+          const data = await response.json();
+          
           if (response.ok) {
-            const data = await response.json();
             messageDiv.textContent = data.message || 'Thank you for your subscription!';
             messageDiv.className = 'subscribe-message success';
             document.getElementById('subscribe-email').value = '';
           } else {
-            throw new Error('Subscription failed');
+            // API returned an error
+            messageDiv.textContent = data.error || 'Subscription failed. Please try again later.';
+            messageDiv.className = 'subscribe-message error';
+            console.error('Subscription API error:', data);
           }
         } catch (error) {
-          // Fallback: store in localStorage and show message
-          let subscribers = JSON.parse(localStorage.getItem('subscribers') || '[]');
-          if (!subscribers.includes(email)) {
-            subscribers.push(email);
-            localStorage.setItem('subscribers', JSON.stringify(subscribers));
-            messageDiv.textContent = 'Subscription request received! (Note: Please set up the API endpoint for full functionality)';
-            messageDiv.className = 'subscribe-message success';
-            document.getElementById('subscribe-email').value = '';
-          } else {
-            messageDiv.textContent = 'You are already subscribed!';
-            messageDiv.className = 'subscribe-message info';
-          }
+          // Network error or API not available
+          console.error('Subscription request failed:', error);
+          messageDiv.textContent = 'Unable to connect to the server. Please check your connection and try again.';
+          messageDiv.className = 'subscribe-message error';
         } finally {
           button.disabled = false;
           button.textContent = 'Subscribe';
