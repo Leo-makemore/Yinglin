@@ -260,8 +260,14 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Valid email is required' });
     }
 
-    const subscribers = await loadSubscribers();
+    let subscribers = await loadSubscribers();
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Double-check that subscribers is an array
+    if (!Array.isArray(subscribers)) {
+      console.error('Subscribers is not an array after loadSubscribers:', typeof subscribers, subscribers);
+      subscribers = [];
+    }
 
     if (subscribers.includes(normalizedEmail)) {
       return res.status(200).json({ message: 'You are already subscribed!' });
