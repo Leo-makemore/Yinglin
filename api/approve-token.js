@@ -116,10 +116,18 @@ async function sendTokenEmail(email, token) {
       html: htmlTemplate,
       text: `Your access token: ${token}\n\nUse this token to access private content at ${websiteUrl}/thoughts.html`,
     });
+    console.log(`Token email sent successfully to ${email}`);
     return true;
   } catch (error) {
     console.error('Error sending token email:', error);
-    return false;
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      smtp: error.responseCode
+    });
+    return { error: error.message, token: token }; // Return error details and token
   }
 }
 
@@ -193,10 +201,10 @@ module.exports = async function handler(req, res) {
     }
 
     // Send token via email
-    const emailSent = await sendTokenEmail(normalizedEmail, newToken);
+    const emailResult = await sendTokenEmail(normalizedEmail, newToken);
 
     // Send confirmation email to user
-    if (emailSent) {
+    if (emailResult === true) {
       return res.status(200).send(`
         <html>
           <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
@@ -207,12 +215,20 @@ module.exports = async function handler(req, res) {
         </html>
       `);
     } else {
+      // Email failed, but show token on page so user can still get it
+      const errorMsg = emailResult?.error || 'Unknown error';
       return res.status(200).send(`
         <html>
-          <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <body style="font-family: Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #ffc107;">⚠ Request Approved</h2>
             <p>Token generated but email sending failed.</p>
-            <p style="color: #666; margin-top: 30px;">Please check the server logs.</p>
+            <p style="color: #dc3545; font-size: 0.9rem; margin-top: 1rem;">Error: ${errorMsg}</p>
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
+              <p style="margin: 0 0 10px 0; font-weight: bold;">Your Access Token:</p>
+              <p style="font-family: monospace; font-size: 18px; margin: 0; word-break: break-all;">${newToken}</p>
+            </div>
+            <p style="color: #666; font-size: 0.9rem;">Please save this token. You can use it to access private content at <a href="${process.env.WEBSITE_URL || 'https://yinglin.vercel.app'}/thoughts.html">thoughts.html</a></p>
+            <p style="color: #666; margin-top: 30px; font-size: 0.85rem;">Note: Please check SMTP configuration in server logs.</p>
           </body>
         </html>
       `);
