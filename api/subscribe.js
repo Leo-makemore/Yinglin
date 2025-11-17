@@ -181,7 +181,37 @@ async function loadSubscribers() {
 
   try {
     const subscribers = await redis.get(SUBSCRIBERS_KEY);
-    return subscribers || [];
+    
+    // Ensure we always return an array
+    if (!subscribers) {
+      return [];
+    }
+    
+    // If it's already an array, return it
+    if (Array.isArray(subscribers)) {
+      return subscribers;
+    }
+    
+    // If it's a string, try to parse it as JSON
+    if (typeof subscribers === 'string') {
+      try {
+        const parsed = JSON.parse(subscribers);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error('Failed to parse subscribers as JSON:', e);
+        return [];
+      }
+    }
+    
+    // If it's an object, try to convert to array
+    if (typeof subscribers === 'object') {
+      console.warn('Subscribers is an object, converting to array');
+      return Object.values(subscribers).filter(email => typeof email === 'string');
+    }
+    
+    // Fallback: return empty array
+    console.warn('Unexpected subscribers format:', typeof subscribers, subscribers);
+    return [];
   } catch (error) {
     console.error('Error loading subscribers from Redis:', error);
     return [];
