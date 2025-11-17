@@ -244,17 +244,23 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to save subscription' });
     }
 
-    // Send notification emails (don't wait for them to complete)
-    sendSubscriptionEmails(normalizedEmail).then(result => {
-      if (result.adminSent) {
+    // Send notification emails (wait for completion to ensure they're sent)
+    try {
+      const emailResult = await sendSubscriptionEmails(normalizedEmail);
+      if (emailResult.adminSent) {
         console.log(`Subscription notification sent to admin for ${normalizedEmail}`);
+      } else {
+        console.error(`Failed to send subscription notification to admin for ${normalizedEmail}`);
       }
-      if (result.userSent) {
+      if (emailResult.userSent) {
         console.log(`Subscription confirmation sent to user ${normalizedEmail}`);
+      } else {
+        console.error(`Failed to send subscription confirmation to user ${normalizedEmail}`);
       }
-    }).catch(error => {
+    } catch (error) {
       console.error('Error sending subscription emails:', error);
-    });
+      // Don't fail the subscription if email fails, but log it
+    }
 
     return res.status(200).json({ 
       message: 'Thank you for your subscription!',

@@ -1,6 +1,7 @@
 // API endpoint for handling unsubscriptions using Upstash Redis
 
 const { Redis } = require('@upstash/redis');
+const nodemailer = require('nodemailer');
 
 // Initialize Redis client
 function getRedisConfig() {
@@ -32,6 +33,130 @@ const redis = config
   : null;
 
 const SUBSCRIBERS_KEY = 'subscribers:list';
+const ADMIN_EMAIL = 'wangyinglin177@gmail.com';
+
+// Send unsubscription notification emails
+async function sendUnsubscriptionEmails(userEmail) {
+  // Only load dotenv in local development (not needed on Vercel)
+  if (process.env.VERCEL !== '1') {
+    try {
+      require('dotenv').config();
+    } catch (e) {
+      // dotenv not available, that's ok on Vercel
+    }
+  }
+  
+  // Check each variable individually
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpPort = process.env.SMTP_PORT;
+  
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    console.error('SMTP not configured, cannot send unsubscription emails');
+    return { adminSent: false, userSent: false };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: parseInt(smtpPort || '587'),
+    secure: smtpPort === '465',
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
+
+  const websiteUrl = process.env.WEBSITE_URL || 'https://yinglin.vercel.app';
+  const fromName = process.env.FROM_NAME || 'Yinglin Wang';
+  const fromEmail = process.env.FROM_EMAIL || smtpUser;
+
+  let adminSent = false;
+  let userSent = false;
+
+  // Send email to admin
+  try {
+    const adminHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .info-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>Subscription Cancelled</h2>
+          <p>Someone has unsubscribed from your updates:</p>
+          <div class="info-box">
+            <strong>Email:</strong> ${userEmail}<br>
+            <strong>Time:</strong> ${new Date().toLocaleString()}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const adminResult = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: ADMIN_EMAIL,
+      subject: `Unsubscription: ${userEmail}`,
+      html: adminHtml,
+      text: `Unsubscription from ${userEmail}\nTime: ${new Date().toLocaleString()}`,
+    });
+    
+    console.log(`Unsubscription notification sent to admin. MessageId: ${adminResult.messageId}`);
+    adminSent = true;
+  } catch (error) {
+    console.error('Error sending unsubscription notification to admin:', error);
+  }
+
+  // Send confirmation email to user
+  try {
+    const userHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .button { display: inline-block; padding: 12px 24px; background: #8a1c1c; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>You Have Been Unsubscribed</h2>
+          <p>You have successfully unsubscribed from our updates.</p>
+          <p>We're sorry to see you go! If you change your mind, you can always subscribe again.</p>
+          <a href="${websiteUrl}/index.html" class="button">Visit Website</a>
+          <p style="margin-top: 30px; font-size: 12px; color: #666;">
+            If you did not unsubscribe, please contact us.
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const userResult = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: userEmail,
+      subject: 'You Have Been Unsubscribed',
+      html: userHtml,
+      text: `You have been unsubscribed from our updates. If you change your mind, you can subscribe again at ${websiteUrl}/index.html`,
+    });
+    
+    console.log(`Unsubscription confirmation sent to user. MessageId: ${userResult.messageId}`);
+    userSent = true;
+  } catch (error) {
+    console.error('Error sending unsubscription confirmation to user:', error);
+  }
+
+  return { adminSent, userSent };
+}
 
 async function loadSubscribers() {
   if (!redis) {
@@ -107,6 +232,24 @@ module.exports = async function handler(req, res) {
 
     if (!saved) {
       return res.status(500).json({ error: 'Failed to unsubscribe' });
+    }
+
+    // Send notification emails (wait for completion to ensure they're sent)
+    try {
+      const emailResult = await sendUnsubscriptionEmails(normalizedEmail);
+      if (emailResult.adminSent) {
+        console.log(`Unsubscription notification sent to admin for ${normalizedEmail}`);
+      } else {
+        console.error(`Failed to send unsubscription notification to admin for ${normalizedEmail}`);
+      }
+      if (emailResult.userSent) {
+        console.log(`Unsubscription confirmation sent to user ${normalizedEmail}`);
+      } else {
+        console.error(`Failed to send unsubscription confirmation to user ${normalizedEmail}`);
+      }
+    } catch (error) {
+      console.error('Error sending unsubscription emails:', error);
+      // Don't fail the unsubscription if email fails, but log it
     }
 
     return res.status(200).json({ 
