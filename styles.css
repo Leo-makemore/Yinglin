@@ -176,9 +176,9 @@ body {
 
 .gallery-grid img {
   width: 100%;
-  height: auto;
-  max-height: 400px;
-  object-fit: contain;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .gallery-grid figcaption {

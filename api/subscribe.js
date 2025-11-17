@@ -65,8 +65,22 @@ async function sendSubscriptionEmails(userEmail) {
   const smtpPass = process.env.SMTP_PASS;
   const smtpPort = process.env.SMTP_PORT;
   
+  console.log('SMTP Configuration Check (subscription emails):', {
+    SMTP_HOST: smtpHost ? `${smtpHost.substring(0, 10)}...` : 'NOT SET',
+    SMTP_PORT: smtpPort || 'NOT SET (using default 587)',
+    SMTP_USER: smtpUser ? `${smtpUser.substring(0, 5)}...` : 'NOT SET',
+    SMTP_PASS: smtpPass ? '***SET***' : 'NOT SET',
+    ADMIN_EMAIL: ADMIN_EMAIL,
+    USER_EMAIL: userEmail
+  });
+  
   if (!smtpHost || !smtpUser || !smtpPass) {
     console.error('SMTP not configured, cannot send subscription emails');
+    console.error('Missing environment variables:', {
+      SMTP_HOST: !smtpHost ? 'MISSING' : 'SET',
+      SMTP_USER: !smtpUser ? 'MISSING' : 'SET',
+      SMTP_PASS: !smtpPass ? 'MISSING' : 'SET'
+    });
     return { adminSent: false, userSent: false };
   }
 
@@ -89,6 +103,7 @@ async function sendSubscriptionEmails(userEmail) {
 
   // Send email to admin
   try {
+    console.log(`Attempting to send subscription notification to admin: ${ADMIN_EMAIL}`);
     const adminHtml = `
       <!DOCTYPE html>
       <html>
@@ -113,22 +128,44 @@ async function sendSubscriptionEmails(userEmail) {
       </html>
     `;
 
-    const adminResult = await transporter.sendMail({
+    const adminMailOptions = {
       from: `"${fromName}" <${fromEmail}>`,
       to: ADMIN_EMAIL,
       subject: `New Subscription: ${userEmail}`,
       html: adminHtml,
       text: `New subscription from ${userEmail}\nTime: ${new Date().toLocaleString()}`,
+    };
+    
+    console.log('Admin email options:', {
+      from: adminMailOptions.from,
+      to: adminMailOptions.to,
+      subject: adminMailOptions.subject
     });
     
+    const adminResult = await transporter.sendMail(adminMailOptions);
+    
     console.log(`Subscription notification sent to admin. MessageId: ${adminResult.messageId}`);
+    console.log('Admin email result:', {
+      messageId: adminResult.messageId,
+      response: adminResult.response,
+      accepted: adminResult.accepted,
+      rejected: adminResult.rejected
+    });
     adminSent = true;
   } catch (error) {
     console.error('Error sending subscription notification to admin:', error);
+    console.error('Admin email error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode
+    });
   }
 
   // Send confirmation email to user
   try {
+    console.log(`Attempting to send subscription confirmation to user: ${userEmail}`);
     const userHtml = `
       <!DOCTYPE html>
       <html>
@@ -155,18 +192,39 @@ async function sendSubscriptionEmails(userEmail) {
       </html>
     `;
 
-    const userResult = await transporter.sendMail({
+    const userMailOptions = {
       from: `"${fromName}" <${fromEmail}>`,
       to: userEmail,
       subject: 'Thank You for Subscribing!',
       html: userHtml,
       text: `Thank you for subscribing! You will receive updates from my website. To unsubscribe, visit: ${websiteUrl}/unsubscribe.html`,
+    };
+    
+    console.log('User email options:', {
+      from: userMailOptions.from,
+      to: userMailOptions.to,
+      subject: userMailOptions.subject
     });
     
+    const userResult = await transporter.sendMail(userMailOptions);
+    
     console.log(`Subscription confirmation sent to user. MessageId: ${userResult.messageId}`);
+    console.log('User email result:', {
+      messageId: userResult.messageId,
+      response: userResult.response,
+      accepted: userResult.accepted,
+      rejected: userResult.rejected
+    });
     userSent = true;
   } catch (error) {
     console.error('Error sending subscription confirmation to user:', error);
+    console.error('User email error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode
+    });
   }
 
   return { adminSent, userSent };
