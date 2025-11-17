@@ -93,7 +93,15 @@ module.exports = async function handler(req, res) {
     }
 
     // Send rejection email to user
-    require('dotenv').config();
+    // Only load dotenv in local development (not needed on Vercel)
+    if (process.env.VERCEL !== '1') {
+      try {
+        require('dotenv').config();
+      } catch (e) {
+        // dotenv not available, that's ok on Vercel
+      }
+    }
+    
     const nodemailer = require('nodemailer');
     
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {

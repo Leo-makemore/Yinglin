@@ -75,26 +75,56 @@ async function saveUserToken(email, token) {
 
 // Send approval request email to admin
 async function sendApprovalRequestEmail(userEmail) {
-  require('dotenv').config();
+  // Only load dotenv in local development (not needed on Vercel)
+  if (process.env.VERCEL !== '1') {
+    try {
+      require('dotenv').config();
+    } catch (e) {
+      // dotenv not available, that's ok on Vercel
+    }
+  }
   
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  // Check each variable individually
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpPort = process.env.SMTP_PORT;
+  
+  console.log('SMTP Configuration Check (approval request):', {
+    SMTP_HOST: smtpHost ? `${smtpHost.substring(0, 10)}...` : 'NOT SET',
+    SMTP_PORT: smtpPort || 'NOT SET (using default 587)',
+    SMTP_USER: smtpUser ? `${smtpUser.substring(0, 5)}...` : 'NOT SET',
+    SMTP_PASS: smtpPass ? '***SET***' : 'NOT SET',
+    VERCEL_ENV: process.env.VERCEL || 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV || 'NOT SET'
+  });
+  
+  if (!smtpHost || !smtpUser || !smtpPass) {
     console.error('SMTP not configured, cannot send email');
+    console.error('Missing or empty environment variables:', {
+      SMTP_HOST: !smtpHost ? 'MISSING' : 'SET',
+      SMTP_USER: !smtpUser ? 'MISSING' : 'SET',
+      SMTP_PASS: !smtpPass ? 'MISSING' : 'SET'
+    });
+    console.error('All available env vars starting with SMTP:', 
+      Object.keys(process.env).filter(k => k.startsWith('SMTP'))
+    );
     return false;
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
+    host: smtpHost,
+    port: parseInt(smtpPort || '587'),
+    secure: smtpPort === '465',
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
   const websiteUrl = process.env.WEBSITE_URL || 'https://yinglin.vercel.app';
   const fromName = process.env.FROM_NAME || 'Yinglin Wang';
-  const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER;
+  const fromEmail = process.env.FROM_EMAIL || smtpUser;
 
   if (!redis) {
     console.error('Redis not configured, cannot send approval request');
@@ -151,43 +181,87 @@ async function sendApprovalRequestEmail(userEmail) {
   `;
 
   try {
-    await transporter.sendMail({
+    console.log(`Attempting to send approval request email to ${ADMIN_EMAIL} for user ${userEmail}`);
+    const result = await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
       to: ADMIN_EMAIL,
       subject: `Token Request from ${userEmail}`,
       html: htmlTemplate,
       text: `Token request from ${userEmail}\n\nApprove: ${approveUrl}\nReject: ${rejectUrl}`,
     });
+    console.log(`Approval request email sent successfully. MessageId: ${result.messageId}`);
     return true;
   } catch (error) {
     console.error('Error sending approval request email:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      smtp: error.responseCode
+    });
+    console.error('SMTP Config check:', {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      user: process.env.SMTP_USER ? '***configured***' : 'NOT SET',
+      pass: process.env.SMTP_PASS ? '***configured***' : 'NOT SET',
+      adminEmail: ADMIN_EMAIL
+    });
     return false;
   }
 }
 
 // Send token via email
 async function sendTokenEmail(email, token) {
-  // Load environment variables
-  require('dotenv').config();
+  // Only load dotenv in local development (not needed on Vercel)
+  if (process.env.VERCEL !== '1') {
+    try {
+      require('dotenv').config();
+    } catch (e) {
+      // dotenv not available, that's ok on Vercel
+    }
+  }
   
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  // Check each variable individually
+  const smtpHost2 = process.env.SMTP_HOST;
+  const smtpUser2 = process.env.SMTP_USER;
+  const smtpPass2 = process.env.SMTP_PASS;
+  const smtpPort2 = process.env.SMTP_PORT;
+  
+  console.log('SMTP Configuration Check (token email):', {
+    SMTP_HOST: smtpHost2 ? `${smtpHost2.substring(0, 10)}...` : 'NOT SET',
+    SMTP_PORT: smtpPort2 || 'NOT SET (using default 587)',
+    SMTP_USER: smtpUser2 ? `${smtpUser2.substring(0, 5)}...` : 'NOT SET',
+    SMTP_PASS: smtpPass2 ? '***SET***' : 'NOT SET'
+  });
+  
+  if (!smtpHost2 || !smtpUser2 || !smtpPass2) {
     console.error('SMTP not configured, cannot send email');
+    console.error('Missing or empty environment variables:', {
+      SMTP_HOST: !smtpHost2 ? 'MISSING' : 'SET',
+      SMTP_USER: !smtpUser2 ? 'MISSING' : 'SET',
+      SMTP_PASS: !smtpPass2 ? 'MISSING' : 'SET'
+    });
+    console.error('All available env vars starting with SMTP:', 
+      Object.keys(process.env).filter(k => k.startsWith('SMTP'))
+    );
     return false;
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
+    host: smtpHost2,
+    port: parseInt(smtpPort2 || '587'),
+    secure: smtpPort2 === '465',
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpUser2,
+      pass: smtpPass2,
     },
   });
 
   const websiteUrl = process.env.WEBSITE_URL || 'https://yinglin.vercel.app';
   const fromName = process.env.FROM_NAME || 'Yinglin Wang';
-  const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER;
+  const fromEmail = process.env.FROM_EMAIL || smtpUser2;
 
   const htmlTemplate = `
     <!DOCTYPE html>
@@ -296,8 +370,12 @@ module.exports = async function handler(req, res) {
     const emailSent = await sendApprovalRequestEmail(normalizedEmail);
 
     if (!emailSent) {
-      console.error('Failed to send approval request email');
+      console.error(`CRITICAL: Failed to send approval request email to ${ADMIN_EMAIL} for user ${normalizedEmail}`);
+      console.error('This means the admin will not receive the approval request!');
       // Still return success to user, but log the error
+      // In production, you might want to also send a notification or alert
+    } else {
+      console.log(`Approval request email successfully sent to ${ADMIN_EMAIL}`);
     }
 
     // Return success message (token will be sent after approval)

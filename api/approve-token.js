@@ -60,20 +60,48 @@ async function saveUserToken(email, token) {
 
 // Send token via email
 async function sendTokenEmail(email, token) {
-  require('dotenv').config();
+  // Only load dotenv in local development (not needed on Vercel)
+  if (process.env.VERCEL !== '1') {
+    try {
+      require('dotenv').config();
+    } catch (e) {
+      // dotenv not available, that's ok on Vercel
+    }
+  }
   
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  // Check each variable individually
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpPort = process.env.SMTP_PORT;
+  
+  console.log('SMTP Configuration Check:', {
+    SMTP_HOST: smtpHost ? `${smtpHost.substring(0, 10)}...` : 'NOT SET',
+    SMTP_PORT: smtpPort || 'NOT SET (using default 587)',
+    SMTP_USER: smtpUser ? `${smtpUser.substring(0, 5)}...` : 'NOT SET',
+    SMTP_PASS: smtpPass ? '***SET***' : 'NOT SET'
+  });
+  
+  if (!smtpHost || !smtpUser || !smtpPass) {
     console.error('SMTP not configured, cannot send email');
-    return false;
+    console.error('Missing or empty environment variables:', {
+      SMTP_HOST: !smtpHost ? 'MISSING' : 'SET',
+      SMTP_USER: !smtpUser ? 'MISSING' : 'SET',
+      SMTP_PASS: !smtpPass ? 'MISSING' : 'SET'
+    });
+    console.error('All available env vars starting with SMTP:', 
+      Object.keys(process.env).filter(k => k.startsWith('SMTP'))
+    );
+    return { error: 'SMTP not configured', token: token };
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
+    host: smtpHost,
+    port: parseInt(smtpPort || '587'),
+    secure: smtpPort === '465',
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
