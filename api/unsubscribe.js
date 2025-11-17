@@ -248,11 +248,19 @@ module.exports = async function handler(req, res) {
     let subscribers = await loadSubscribers();
     const normalizedEmail = email.toLowerCase().trim();
     
-    // Double-check that subscribers is an array
+    // Force subscribers to be an array - create a new array to ensure it's always valid
     if (!Array.isArray(subscribers)) {
       console.error('Subscribers is not an array after loadSubscribers:', typeof subscribers, subscribers);
-      subscribers = [];
+      // Try to convert to array
+      if (subscribers && typeof subscribers === 'object') {
+        subscribers = Object.values(subscribers).filter(v => typeof v === 'string');
+      } else {
+        subscribers = [];
+      }
     }
+    
+    // Create a new array to ensure it's mutable
+    subscribers = [...subscribers];
     
     const index = subscribers.indexOf(normalizedEmail);
 

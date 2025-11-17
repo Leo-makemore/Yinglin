@@ -180,37 +180,62 @@ async function loadSubscribers() {
   }
 
   try {
-    const subscribers = await redis.get(SUBSCRIBERS_KEY);
+    const rawData = await redis.get(SUBSCRIBERS_KEY);
+    
+    console.log('Raw data from Redis:', {
+      type: typeof rawData,
+      isArray: Array.isArray(rawData),
+      value: rawData,
+      constructor: rawData?.constructor?.name
+    });
     
     // Ensure we always return an array
-    if (!subscribers) {
+    if (!rawData) {
+      console.log('No data in Redis, returning empty array');
       return [];
     }
     
-    // If it's already an array, return it
-    if (Array.isArray(subscribers)) {
-      return subscribers;
+    // If it's already an array, return a copy
+    if (Array.isArray(rawData)) {
+      console.log('Data is array, returning copy');
+      return Array.from(rawData);
+    }
+    
+    // Try Array.from for array-like objects
+    try {
+      const arrayLike = Array.from(rawData);
+      if (arrayLike.length >= 0) {
+        console.log('Converted array-like object to array');
+        return arrayLike;
+      }
+    } catch (e) {
+      // Not array-like, continue
     }
     
     // If it's a string, try to parse it as JSON
-    if (typeof subscribers === 'string') {
+    if (typeof rawData === 'string') {
       try {
-        const parsed = JSON.parse(subscribers);
-        return Array.isArray(parsed) ? parsed : [];
+        const parsed = JSON.parse(rawData);
+        console.log('Parsed string to:', typeof parsed, Array.isArray(parsed));
+        if (Array.isArray(parsed)) {
+          return [...parsed];
+        }
+        return [];
       } catch (e) {
         console.error('Failed to parse subscribers as JSON:', e);
         return [];
       }
     }
     
-    // If it's an object, try to convert to array
-    if (typeof subscribers === 'object') {
+    // If it's an object (but not array), try to convert to array
+    if (typeof rawData === 'object' && rawData !== null) {
       console.warn('Subscribers is an object, converting to array');
-      return Object.values(subscribers).filter(email => typeof email === 'string');
+      const values = Object.values(rawData).filter(v => typeof v === 'string');
+      return values;
     }
     
     // Fallback: return empty array
-    console.warn('Unexpected subscribers format:', typeof subscribers, subscribers);
+    console.warn('Unexpected subscribers format:', typeof rawData, rawData);
     return [];
   } catch (error) {
     console.error('Error loading subscribers from Redis:', error);
@@ -263,9 +288,23 @@ module.exports = async function handler(req, res) {
     let subscribers = await loadSubscribers();
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Double-check that subscribers is an array
+    // Force subscribers to be an array - create a new array to ensure it's always valid
     if (!Array.isArray(subscribers)) {
       console.error('Subscribers is not an array after loadSubscribers:', typeof subscribers, subscribers);
+      // Try to convert to array
+      if (subscribers && typeof subscribers === 'object') {
+        subscribers = Object.values(subscribers).filter(v => typeof v === 'string');
+      } else {
+        subscribers = [];
+      }
+    }
+    
+    // Create a new array to ensure it's mutable
+    if (Array.isArray(subscribers)) {
+      subscribers = Array.from(subscribers);
+    } else {
+      // If somehow still not an array, force it
+      console.error('Subscribers still not an array after all checks, forcing to array');
       subscribers = [];
     }
 
