@@ -37,7 +37,7 @@ const PENDING_REQUESTS_KEY = 'token_requests:pending';
 function generateToken() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let token = '';
-  for (let i = 0; i < 32; i++) {
+  for (let i = 0; i < 5; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return token;
@@ -137,14 +137,30 @@ async function sendTokenEmail(email, token) {
   `;
 
   try {
-    await transporter.sendMail({
+    const mailOptions = {
       from: `"${fromName}" <${fromEmail}>`,
       to: email,
       subject: 'Your Access Token Request Has Been Approved',
       html: htmlTemplate,
       text: `Your access token: ${token}\n\nUse this token to access private content at ${websiteUrl}/thoughts.html`,
+    };
+    
+    console.log('Sending token email:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      smtpHost: smtpHost,
+      smtpUser: smtpUser
     });
+    
+    const result = await transporter.sendMail(mailOptions);
     console.log(`Token email sent successfully to ${email}`);
+    console.log('Email result:', {
+      messageId: result.messageId,
+      response: result.response,
+      accepted: result.accepted,
+      rejected: result.rejected
+    });
     return true;
   } catch (error) {
     console.error('Error sending token email:', error);

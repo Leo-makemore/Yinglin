@@ -39,7 +39,7 @@ const ADMIN_EMAIL = 'wangyinglin177@gmail.com';
 function generateToken() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let token = '';
-  for (let i = 0; i < 32; i++) {
+  for (let i = 0; i < 5; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return token;
@@ -181,15 +181,31 @@ async function sendApprovalRequestEmail(userEmail) {
   `;
 
   try {
-    console.log(`Attempting to send approval request email to ${ADMIN_EMAIL} for user ${userEmail}`);
-    const result = await transporter.sendMail({
+    const mailOptions = {
       from: `"${fromName}" <${fromEmail}>`,
       to: ADMIN_EMAIL,
       subject: `Token Request from ${userEmail}`,
       html: htmlTemplate,
       text: `Token request from ${userEmail}\n\nApprove: ${approveUrl}\nReject: ${rejectUrl}`,
+    };
+    
+    console.log(`Attempting to send approval request email to ${ADMIN_EMAIL} for user ${userEmail}`);
+    console.log('Email details:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      smtpHost: smtpHost,
+      smtpUser: smtpUser
     });
+    
+    const result = await transporter.sendMail(mailOptions);
     console.log(`Approval request email sent successfully. MessageId: ${result.messageId}`);
+    console.log('Email result:', {
+      messageId: result.messageId,
+      response: result.response,
+      accepted: result.accepted,
+      rejected: result.rejected
+    });
     return true;
   } catch (error) {
     console.error('Error sending approval request email:', error);
@@ -380,7 +396,7 @@ module.exports = async function handler(req, res) {
 
     // Return success message (token will be sent after approval)
     return res.status(200).json({ 
-      message: 'Your request has been submitted. You will receive an email with your access token once approved.',
+      message: 'Your request has been submitted. You will receive an email with your access token once approved.if you do no receive it, please check your spam folder or DM me.',
       pending: true
     });
   } catch (error) {
