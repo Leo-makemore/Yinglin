@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V2LF33K561"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-V2LF33K561');
+    </script>
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login | Yinglin Wang</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="page">
+      <aside id="menu">
+        <nav>
+          <a class="menu-link" href="index.html">Home</a>
+          <a class="menu-link" href="experience.html">Experience</a>
+          <a class="menu-link" href="projects.html">Projects</a>
+          <a class="menu-link" href="gallery.html">Gallery</a>
+          <a class="menu-link" href="thoughts.html">Thoughts</a>
+          <a class="menu-link" href="reference.html">Miscellaneous</a>
+        </nav>
+      </aside>
+
+      <main id="content">
+        <div id="toptitle">
+          <h1>Private Access</h1>
+          <div class="toptitle-rule rule-top"></div>
+          <div class="toptitle-rule rule-bottom"></div>
+        </div>
+
+        <section class="section">
+          <p>Enter your access token to view private content.</p>
+          <form id="login-form" class="subscribe-form">
+            <input 
+              type="password" 
+              id="token-input" 
+              name="token" 
+              placeholder="Enter access token" 
+              required 
+              class="subscribe-input"
+            />
+            <button type="submit" class="subscribe-button">Login</button>
+          </form>
+          <div id="login-message" class="subscribe-message"></div>
+          <p style="margin-top: 1rem;">
+            <a href="index.html">← Back to home</a>
+          </p>
+        </section>
+      </main>
+    </div>
+    <footer id="footer"></footer>
+    <script src="auth.js"></script>
+    <script>
+      document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const token = document.getElementById('token-input').value;
+        const messageDiv = document.getElementById('login-message');
+        const button = document.querySelector('.subscribe-button');
+        
+        button.disabled = true;
+        button.textContent = 'Verifying...';
+        messageDiv.textContent = '';
+        messageDiv.className = 'subscribe-message';
+        
+        try {
+          const isValid = await authenticate(token);
+          
+          if (isValid) {
+            messageDiv.textContent = 'Login successful! Redirecting...';
+            messageDiv.className = 'subscribe-message success';
+            
+            // Redirect to the page that requested auth, or home
+            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+            setTimeout(() => {
+              window.location.href = redirectUrl;
+            }, 1000);
+          } else {
+            messageDiv.textContent = 'Invalid token. Please try again.';
+            messageDiv.className = 'subscribe-message error';
+            document.getElementById('token-input').value = '';
+          }
+        } catch (error) {
+          messageDiv.textContent = 'An error occurred. Please try again later.';
+          messageDiv.className = 'subscribe-message error';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Login';
+        }
+      });
+      
+      // If already authenticated, redirect
+      if (isAuthenticated()) {
+        const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+        window.location.href = redirectUrl;
+      }
+    </script>
+  </body>
+</html>
+

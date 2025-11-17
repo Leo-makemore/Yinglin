@@ -20,6 +20,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script src="auth.js"></script>
   </head>
   <body>
     <div id="page">
@@ -58,11 +59,201 @@
     
             .How do you think if you just simply put "Founder and CEO of Google" on your website? </p>
           <p>
-            Later I may develop token to let people get access to private content.The thoughts is usually updates weekly.
+            The thoughts is usually updates weekly.
           </p>
         <!-- THOUGHTS_START -->
 
         <!-- THOUGHTS_END -->
+        
+        <!-- Login Form (default - shown first) -->
+        <div id="login-form-container" style="display: none; margin-top: 2rem; padding: 1.5rem; background: #f5f5f5; border-radius: 4px; border: 1px solid var(--border);">
+          <h2 style="margin-top: 0;">Access Private Thoughts</h2>
+          <p style="margin-bottom: 0.5rem;">Enter your access token:</p>
+          <form id="private-login-form" class="subscribe-form" style="margin-top: 0.5rem;">
+            <input 
+              type="password" 
+              id="private-token-input" 
+              placeholder="Enter access token" 
+              required 
+              class="subscribe-input"
+            />
+            <button type="submit" class="subscribe-button">Access</button>
+          </form>
+          <div id="private-login-message" class="subscribe-message" style="margin-top: 0.5rem;"></div>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
+            Don't have a token? <a href="javascript:void(0)" onclick="showRequestForm()" style="color: var(--link);">Click here to request one</a>
+          </p>
+        </div>
+        
+        <!-- Token Request Form (shown when user clicks "request one") -->
+        <div id="request-token-container" style="display: none; margin-top: 2rem; padding: 1.5rem; background: #f5f5f5; border-radius: 4px; border: 1px solid var(--border);">
+          <h2 style="margin-top: 0;">Request Access Token</h2>
+          <p>Enter your email to receive an access token:</p>
+          <form id="request-token-form" class="subscribe-form" style="margin-top: 0.5rem;">
+            <input 
+              type="email" 
+              id="request-email-input" 
+              placeholder="Enter your email" 
+              required 
+              class="subscribe-input"
+            />
+            <button type="submit" class="subscribe-button">Request Token</button>
+          </form>
+          <div id="request-token-message" class="subscribe-message" style="margin-top: 0.5rem;"></div>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
+            Already have a token? <a href="javascript:void(0)" onclick="showLoginForm()" style="color: var(--link);">Click here to access</a>
+          </p>
+        </div>
+        
+        <!-- Private Content (authenticated users) -->
+        <div id="private-content" style="display: none; margin-top: 2rem;">
+          <h2>Private Thoughts</h2>
+          <p>This is your private thoughts section. Add your private content here.</p>
+          <p style="margin-top: 1rem;">
+            <a href="javascript:void(0)" onclick="logout()" style="color: var(--muted); font-size: 0.9rem;">Logout</a>
+          </p>
+        </div>
         </section>
       </main>
     </div>
+    <footer id="footer"></footer>
+    <script>
+      // Check authentication on page load
+      window.addEventListener('DOMContentLoaded', function() {
+        if (isAuthenticated()) {
+          document.getElementById('private-content').style.display = 'block';
+          document.getElementById('login-form-container').style.display = 'none';
+          document.getElementById('request-token-container').style.display = 'none';
+        } else {
+          document.getElementById('private-content').style.display = 'none';
+          // Show login form by default
+          document.getElementById('login-form-container').style.display = 'block';
+          document.getElementById('request-token-container').style.display = 'none';
+        }
+      });
+      
+      // Show request form
+      function showRequestForm() {
+        document.getElementById('request-token-container').style.display = 'block';
+        document.getElementById('login-form-container').style.display = 'none';
+      }
+      
+      // Show login form
+      function showLoginForm() {
+        document.getElementById('request-token-container').style.display = 'none';
+        document.getElementById('login-form-container').style.display = 'block';
+      }
+      
+      // Handle token request form
+      document.getElementById('request-token-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('request-email-input').value;
+        const messageDiv = document.getElementById('request-token-message');
+        const button = document.querySelector('#request-token-form .subscribe-button');
+        
+        button.disabled = true;
+        button.textContent = 'Requesting...';
+        messageDiv.textContent = '';
+        messageDiv.className = 'subscribe-message';
+        
+        try {
+          const response = await fetch('/api/request-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            if (data.pending) {
+              messageDiv.textContent = data.message || 'Your request has been submitted. You will receive an email with your access token once approved.';
+              messageDiv.className = 'subscribe-message success';
+              // Keep showing request form, user should wait for approval
+            } else if (data.token_sent) {
+              messageDiv.textContent = 'Token has been sent to your email! Please check your inbox and use it to access.';
+              messageDiv.className = 'subscribe-message success';
+              // Show login form after successful request
+              setTimeout(() => {
+                showLoginForm();
+                if (data.token) {
+                  // If token is returned (email failed), show it
+                  document.getElementById('private-token-input').value = data.token;
+                  document.getElementById('private-login-message').textContent = 'Token generated. You can use it to login.';
+                  document.getElementById('private-login-message').className = 'subscribe-message info';
+                }
+              }, 2000);
+            } else if (data.token) {
+              // Email failed but token is returned
+              messageDiv.textContent = 'Token generated. Email sending failed, but here is your token:';
+              messageDiv.className = 'subscribe-message info';
+              showLoginForm();
+              document.getElementById('private-token-input').value = data.token;
+            } else {
+              messageDiv.textContent = data.message || 'Token request processed.';
+              messageDiv.className = 'subscribe-message success';
+            }
+            document.getElementById('request-email-input').value = '';
+          } else {
+            messageDiv.textContent = data.error || 'Failed to request token. Please try again.';
+            messageDiv.className = 'subscribe-message error';
+          }
+        } catch (error) {
+          messageDiv.textContent = 'An error occurred. Please try again later.';
+          messageDiv.className = 'subscribe-message error';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Request Token';
+        }
+      });
+      
+      // Handle login form submission
+      document.getElementById('private-login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const token = document.getElementById('private-token-input').value;
+        const messageDiv = document.getElementById('private-login-message');
+        const button = document.querySelector('#private-login-form .subscribe-button');
+        
+        button.disabled = true;
+        button.textContent = 'Verifying...';
+        messageDiv.textContent = '';
+        messageDiv.className = 'subscribe-message';
+        
+        try {
+          const isValid = await authenticate(token);
+          
+          if (isValid) {
+            messageDiv.textContent = 'Access granted!';
+            messageDiv.className = 'subscribe-message success';
+            document.getElementById('private-content').style.display = 'block';
+            document.getElementById('login-form-container').style.display = 'none';
+            document.getElementById('request-token-container').style.display = 'none';
+            document.getElementById('private-token-input').value = '';
+          } else {
+            messageDiv.textContent = 'Invalid token. Please try again.';
+            messageDiv.className = 'subscribe-message error';
+            document.getElementById('private-token-input').value = '';
+          }
+        } catch (error) {
+          messageDiv.textContent = 'An error occurred. Please try again later.';
+          messageDiv.className = 'subscribe-message error';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Access';
+        }
+      });
+      
+      // Logout function
+      function logout() {
+        clearAuth();
+        document.getElementById('private-content').style.display = 'none';
+        document.getElementById('login-form-container').style.display = 'block';
+        document.getElementById('request-token-container').style.display = 'none';
+        document.getElementById('private-login-message').textContent = 'You have been logged out.';
+        document.getElementById('private-login-message').className = 'subscribe-message info';
+      }
+    </script>
+  </body>
+</html>

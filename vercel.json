@@ -11,6 +11,22 @@
     {
       "source": "/api/export-subscribers",
       "destination": "/api/export-subscribers.js"
+    },
+    {
+      "source": "/api/verify-token",
+      "destination": "/api/verify-token.js"
+    },
+    {
+      "source": "/api/request-token",
+      "destination": "/api/request-token.js"
+    },
+    {
+      "source": "/api/approve-token",
+      "destination": "/api/approve-token.js"
+    },
+    {
+      "source": "/api/reject-token",
+      "destination": "/api/reject-token.js"
     }
   ]
 }
