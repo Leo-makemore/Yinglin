@@ -1,87 +1,32 @@
 # Personal Website
 
-Personal website with subscription functionality and Notion integration.
+A pure static personal portfolio site built with HTML and CSS.
 
-## Features
+## Pages
 
-- Personal portfolio website
-- Subscription system with email notifications
-- Notion-powered thoughts and gallery sync
-- Responsive design
+- `index.html` for the homepage
+- `experience.html` for experience
+- `projects.html` for selected projects
+- `gallery.html` for photography
 
-## Setup
+## Local Preview
 
-### Environment Variables
-
-Create a `.env` file with:
-
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-gmail-app-password
-FROM_EMAIL=your-email@gmail.com
-FROM_NAME=Your Name
-WEBSITE_URL=https://your-domain.vercel.app
-```
-
-**Gmail App Password Setup:**
-1. Enable 2-Step Verification in Google Account
-2. Generate App Password: https://myaccount.google.com/apppasswords
-3. Use the 16-character password (without spaces) as `SMTP_PASS`
-
-### Vercel Environment Variables
-
-In Vercel Dashboard → Settings → Environment Variables, add:
-
-- `UPSTASH_REDIS_REST_URL` - Your Upstash Redis REST URL
-- `UPSTASH_REDIS_REST_TOKEN` - Your Upstash Redis REST Token
-
-Or use Vercel's auto-created variables:
-- `KV_REST_API_URL`
-- `KV_REST_API_TOKEN`
-
-## Scripts
-
-```bash
-# Sync thoughts from Notion
-npm run sync
-
-# Sync gallery from Notion
-npm run sync-gallery
-
-# Sync both
-npm run sync-all
-
-# Send email notifications to subscribers
-npm run notify "Subject" "Message"
-
-# Fetch subscribers from Vercel
-npm run fetch-subscribers
-```
-
-## Project Structure
-
-```
-.
-├── api/
-│   ├── subscribe.js          # Subscribe API endpoint
-│   ├── unsubscribe.js        # Unsubscribe API endpoint
-│   └── export-subscribers.js # Export subscribers API
-├── assets/                    # Images and icons
-├── *.html                     # Website pages
-├── styles.css                 # Styles
-├── send-notification.js       # Email notification script
-├── fetch-subscribers.js      # Fetch subscribers script
-└── vercel.json               # Vercel configuration
-```
+Open `index.html` directly in a browser, or serve the folder with any simple static server.
 
 ## Deployment
 
-Deploy to Vercel:
+This repository is configured for GitHub Pages via GitHub Actions.
 
-```bash
-git push
-```
+1. Push changes to the default branch.
+2. In GitHub, enable Pages and set the source to `GitHub Actions`.
+3. The workflow in `.github/workflows/deploy-pages.yml` will publish the site automatically.
 
-Vercel will automatically deploy. Make sure environment variables are set in Vercel Dashboard.
+If this repository is published as a project site, the URL will be similar to:
+
+`https://leo-makemore.github.io/Yinglin/`
+
+If you want the root personal site URL instead:
+
+`https://leo-makemore.github.io/`
+
+rename the repository to `leo-makemore.github.io`.
